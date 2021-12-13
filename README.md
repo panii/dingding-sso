@@ -1,18 +1,23 @@
 # dingding-sso 项目功能
-一个单独的服务，用来做钉钉扫码登录。 
-员工用钉钉扫码后，系统获取员工信息，可以做内部系统的登录，员工离职账号自动失效。 
-使用go语言编写, 零依赖。
+一个单独的服务，用来做钉钉扫码登录。  
+员工用钉钉扫码后，系统获取员工信息，可以做内部系统的登录，员工离职账号自动失效。  
+使用go语言编写, 零依赖。  
 
 ## 背景 2021-07-01
 
-公司内人员流动频繁，若干个项目组自建的后台系统身份认证管理不统一，带来一定安全隐患。近期发生某项目组后台被xss注入攻击，导致管理员session被劫持，后台被外人登录的严重安全事件。 
-所以开发了这个服务，一要大家接入方便，二要融入一定安全保护措施。
+公司内人员流动频繁，若干个项目组自建的后台系统身份认证管理不统一，带来一定安全隐患。近期发生某项目组后台被xss注入攻击，导致管理员session被劫持，后台被外人登录的严重安全事件。  
+所以开发了这个服务，一要大家接入方便，二要融入一定安全保护措施。  
 
 ## 部署方便
 
-* 使用go语言开发，零依赖，代码下载之后，修改配置文件，然后`go build main.go; nohup ./main > /dev/null 2>&1 &` 即可运行服务
-* 参考[钉钉接入文档](https://developers.dingtalk.com/document/app/scan-qr-code-to-login-3rdapp)后直接使用内置http包发起调用钉钉接口，不用下载钉钉的SDK之类的
-* ticket作为key和用户信息作为value保存在内存变量sync.Map中，不用配置redis、数据库之类的
+* 使用go语言开发，零依赖
+* 准备工作: 在钉钉后台创建一个自定义h5 app, 配置回调地址, 开通权限
+* 第一步: 下载代码
+* 第二步: 修改配置文件`config.ini`
+* 第三步: 编译`go build main.go`
+* 第四步: 运行`nohup ./main > /dev/null 2>&1 &`
+* 本服务开发时参考[钉钉接入文档](https://developers.dingtalk.com/document/app/scan-qr-code-to-login-3rdapp)后直接使用内置http包发起调用钉钉接口，不用下载钉钉的SDK之类的
+* 扫码后生成的ticket作为key/用户信息作为value, 直接保存在内存变量sync.Map中，不用配置redis、数据库之类的
 * 对业务方来说，接入方便，登录页面在js里调用一下`window.open(本服务扫码地址)`就可以集成钉钉扫码功能，业务方无需知晓钉钉的app id、app secret等参数
 
 ## 安全措施
@@ -80,7 +85,7 @@
 
 ```
 
-## 浏览器代码
+## 浏览器示例代码
 ```
 var domain = '配置文件中的domain';
 var scanUrl = '配置文件中的scan_url';
@@ -90,9 +95,10 @@ window.open(domain + scanUrl + '?auto=1&ttl=' + ttl, 'dingdingScan', 'height=580
 
 ## 钉钉后台开启的权限
 ```
-钉钉文档 https://developers.dingtalk.com/document/app/scan-qr-code-to-login-3rdapp
+开发这个服务参考的钉钉文档 https://developers.dingtalk.com/document/app/scan-qr-code-to-login-3rdapp
+使用者无需看文档, 使用者只需要
 建立一个h5 app
-权限要求如下
+开通权限要求如下
  - 个人手机号信息                        已开通
  - 通讯录个人信息读权限                   已开通
  - 企业员工手机号信息                     已开通
@@ -101,4 +107,9 @@ window.open(domain + scanUrl + '?auto=1&ttl=' + ttl, 'dingdingScan', 'height=580
  - 企业外部联系人读取权限                  已开通
  - 调用企业API基础权限                    已开通
  - 调用OpenApp专有API时需要具备的权限      已开通
+```
+
+## 调用fetch接口返回的json示例
+```
+{"sso_name":"雷丽","sso_contact_type":0,"sso_mobile":"18089758888","sso_user_dept_info":[{"sso_dept_id":"5738888","sso_dept_name":"客服销售部","sso_is_dept_owner":"0"}],"sso_avatar":"https://static-legacy.dingtalk.com/media/xxxx.jpg","sso_job_title":"客服销售","sso_state_code":"86","sso_company_name":"","sso_email":"","sso_follower_user_id":"","sso_follower_user":null,"sso_address":"","sso_remark":"","sso_dingding_union_id":"xxxx","sso_dingding_user_id":"208888284937978888","sso_dingding_open_id":"xxxx","sso_dingding_nick_name":"雷丽","sso_ticket":"16393592063271033f8a58496c61c8cba2777110f63cda714a7198d7ba52a72c3a01d1e795bc26fb246000","dingding_raw":{"user_info":"xxx","user_union":"xxx","user":"xxx","department_arr":["xxx"],"external_contact_info":""}}
 ```
