@@ -61,7 +61,7 @@
 +--------------------------+
 
 
-后端流程
+服务端流程
 +--------[ 服务端 ]--------+
 |                          |
 |  接收表单                |
@@ -80,5 +80,25 @@
 
 ```
 
+## 浏览器代码
+```
+var domain = '配置文件中的domain';
+var scanUrl = '配置文件中的scan_url';
+var ttl = '3600'; // ticket过期时间, 必须小于配置文件中的ticket_max_ttl
+window.open(domain + scanUrl + '?auto=1&ttl=' + ttl, 'dingdingScan', 'height=580, width=608, top=0, left=0, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no')
+```
 
-
+## 钉钉后台开启的权限
+```
+钉钉文档 https://developers.dingtalk.com/document/app/scan-qr-code-to-login-3rdapp
+建立一个h5 app
+权限要求如下
+ - 个人手机号信息                        已开通
+ - 通讯录个人信息读权限                   已开通
+ - 企业员工手机号信息                     已开通
+ - 通讯录部门信息读权限                   已开通
+ - 成员信息读权限                        已开通
+ - 企业外部联系人读取权限                  已开通
+ - 调用企业API基础权限                    已开通
+ - 调用OpenApp专有API时需要具备的权限      已开通
+```
