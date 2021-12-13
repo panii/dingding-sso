@@ -14,7 +14,7 @@
 * 准备工作: 在钉钉后台创建一个自定义h5 app, 配置回调地址, 开通权限
 * 第一步: 下载代码
 * 第二步: 修改配置文件`config.ini`
-* 第三步: 编译`go build main.go`
+* 第三步: 编译`go build main.go`, 创建日志目录`mkdir logs`
 * 第四步: 运行`nohup ./main > /dev/null 2>&1 &`
 * 本服务开发时参考[钉钉接入文档](https://developers.dingtalk.com/document/app/scan-qr-code-to-login-3rdapp)后直接使用内置http包发起调用钉钉接口，不用下载钉钉的SDK之类的
 * 扫码后生成的ticket作为key/用户信息作为value, 直接保存在内存变量sync.Map中，不用配置redis、数据库之类的
@@ -24,6 +24,7 @@
 
 * ticket生成规则，`sha256(毫秒 + 自增id + 用户UA + 用户ip + 过期秒数)` 长度86字节
 * ticket哈希值由扫码时候的`ip + agent`生成，即使ticket被盗，认证也通不过
+* 支持钉钉通讯录设置外部联系人的方式让外部合作方也能扫码登录
 * 预留了二次认证方式
 
 ## 系统流程
@@ -85,14 +86,6 @@
 
 ```
 
-## 浏览器示例代码
-```
-var domain = '配置文件中的domain';
-var scanUrl = '配置文件中的scan_url';
-var ttl = '3600'; // ticket过期时间, 必须小于配置文件中的ticket_max_ttl
-window.open(domain + scanUrl + '?auto=1&ttl=' + ttl, 'dingdingScan', 'height=580, width=608, top=0, left=0, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no')
-```
-
 ## 钉钉后台开启的权限
 ```
 开发这个服务参考的钉钉文档 https://developers.dingtalk.com/document/app/scan-qr-code-to-login-3rdapp
@@ -109,7 +102,22 @@ window.open(domain + scanUrl + '?auto=1&ttl=' + ttl, 'dingdingScan', 'height=580
  - 调用OpenApp专有API时需要具备的权限      已开通
 ```
 
-## 调用fetch接口返回的json示例
+## 浏览器示例代码
 ```
+var domain = '配置文件中的domain';
+var scanUrl = '配置文件中的scan_url';
+var ttl = '3600'; // ticket过期时间, 必须小于配置文件中的ticket_max_ttl
+window.open(domain + scanUrl + '?auto=1&ttl=' + ttl, 'dingdingScan', 'height=580, width=608, top=0, left=0, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no')
+```
+
+## 服务端调用fetch接口返回的json示例
+```
+curl -d 'sso_ticket=调用的TICKET&client_ip=用户的IP&user_agent=用户的UA&renew=是否续期' https://配置的域名/bms-sso/fetch-by-ticket
+
 {"sso_name":"雷丽","sso_contact_type":0,"sso_mobile":"18089758888","sso_user_dept_info":[{"sso_dept_id":"5738888","sso_dept_name":"客服销售部","sso_is_dept_owner":"0"}],"sso_avatar":"https://static-legacy.dingtalk.com/media/xxxx.jpg","sso_job_title":"客服销售","sso_state_code":"86","sso_company_name":"","sso_email":"","sso_follower_user_id":"","sso_follower_user":null,"sso_address":"","sso_remark":"","sso_dingding_union_id":"xxxx","sso_dingding_user_id":"208888284937978888","sso_dingding_open_id":"xxxx","sso_dingding_nick_name":"雷丽","sso_ticket":"16393592063271033f8a58496c61c8cba2777110f63cda714a7198d7ba52a72c3a01d1e795bc26fb246000","dingding_raw":{"user_info":"xxx","user_union":"xxx","user":"xxx","department_arr":["xxx"],"external_contact_info":""}}
 ```
+
+## 其它地址
+```
+/manager 查看内存中的ticket, 仅127.0.0.1可访问
+
